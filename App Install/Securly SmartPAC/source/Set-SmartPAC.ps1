@@ -92,7 +92,7 @@ foreach ($u in $users){
 
         $regKey = "HKU:\$($user.SID)\Software\Microsoft\Windows\CurrentVersion\Internet Settings" #"HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
         $regName = "AutoConfigURL"
-        $regValue = "https://uk-www.securly.com/smart.pac?fid=securly@theabbey.co.uk&user=$($user.Username)@theabbey.co.uk"
+        $regValue = "https://uk-www.securly.com/smart.pac?fid=SECURLYFID&user=$($user.Username)@DOMAINNAME.co.uk"
 
         # Check if the property/value already exist within the registry
         if (!(Test-RegistryValue -Path $regKey -Property $regName -Value $regValue)){
