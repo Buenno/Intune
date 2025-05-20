@@ -9,7 +9,7 @@ curl -H "Content-Type: application/x-www-form-urlencoded" -X POST https://firewa
 $requestHeaders = @{
   "Content-Type" = "application/x-www-form-urlencoded"
 }
-$requestBody = "user=admin-tw&password=PASSWORD"
+$requestBody = "user=USERNAME&password=PASSWORD"
 $request = Invoke-WebRequest -Method Post -Uri "https://10.1.1.80/api/?type=keygen" -Headers $requestHeaders -Body $requestBody -SkipCertificateCheck
 
 if ($request.StatusCode -eq "200"){
