@@ -15,7 +15,7 @@ Please note that the installation script utilises code which will not run in Con
 
 Once you've install your code signing cert, store it in a variable with `$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert`.
 
-You can then sign your scripts with `Set-AuthenticodeSignature -Certificate $cert -FilePath .\Set-Wallpaper.ps1`.
+You can then sign your scripts with `Set-AuthenticodeSignature -Certificate $cert -FilePath .\scriptName.ps1`.
 
 You can then proceed with building your .intunewin package as normal.
  

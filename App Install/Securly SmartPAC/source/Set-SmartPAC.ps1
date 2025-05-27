@@ -6,6 +6,9 @@
 
 $ErrorActionPreference = 'Stop'
 
+# Set the Securly FID
+$fid = "SET THE FID"
+
 function Get-SIDFromRegistry {
     <#
     .SYNOPSIS
@@ -67,11 +70,16 @@ function Write-Log {
     Add-Content -Path $LogPath -Value $logEntry -Force
 }
 
+Write-Log -Message "Script started..."
+
 # Get a list of logged in users
+Write-Log -Message "Getting logged in users..."
 $users = query user
 $users = $users | ForEach-Object {($_.trim() -replace ">" -replace "\s{2,}", ",")} | ConvertFrom-Csv
+
 # Expose the HKEY_USERS root hive
 New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS
+Write-Log -Message "Exposing HKEY_USERS hive..."
 
 foreach ($u in $users){
     # We only want to match students (f.last25)
@@ -79,26 +87,46 @@ foreach ($u in $users){
     # And our student test accounts (yeargroupStudent)
     $sTestRegex = "^\w{1}\d{1}Student"
     
+    try {
+        if ($u.USERNAME -match "$studentRegex|$sTestRegex"){
+            Write-Log -Message "Found student account - $($u.USERNAME)"
+            # Create a custom object for storing our user data, because we think ahead..
+            try {
+                $user = [PSCustomObject]@{
+                    Username = $u.USERNAME
+                    SID = (Get-SIDFromRegistry -User $u.USERNAME)
+                    SessionState = $u.STATE.Replace("Disc", "Disconnected")
+                    SessionType = $($u.SESSIONNAME -Replace '#', '' -Replace "[0-9]+", "")
+                    #LogonTime = [datetime]::parseexact($u.'LOGON TIME', 'dd/MM/yyyy HH:mm', $null)
+                } 
+            }
+            catch {
+                Write-Log -Message "Unable to create custom user object - $($_.Exception.Message)"
+            }
+            
 
-    if ($u.USERNAME -match "$studentRegex|$sTestRegex"){
-        # Create a custom object for storing our user data, because we think ahead..
-        $user = [PSCustomObject]@{
-            Username = $u.USERNAME
-            SID = (Get-SIDFromRegistry -User $u.USERNAME)
-            SessionState = $u.STATE.Replace("Disc", "Disconnected")
-            SessionType = $($u.SESSIONNAME -Replace '#', '' -Replace "[0-9]+", "")
-            LogonTime = [datetime]::parseexact($u.'LOGON TIME', 'dd/MM/yyyy HH:mm', $null)
-        } 
+            $regKey = "HKU:\$($user.SID)\Software\Microsoft\Windows\CurrentVersion\Internet Settings" #"HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
+            $regName = "AutoConfigURL"
+            $regValue = "https://uk-www.securly.com/smart.pac?fid=$fid&user=$($user.Username)@DOMAINNAME.co.uk"
 
-        $regKey = "HKU:\$($user.SID)\Software\Microsoft\Windows\CurrentVersion\Internet Settings" #"HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
-        $regName = "AutoConfigURL"
-        $regValue = "https://uk-www.securly.com/smart.pac?fid=SECURLYFID&user=$($user.Username)@DOMAINNAME.co.uk"
+            Write-Log -Message "Registry variables defined - $regkey, $regName, $regValue"
 
-        # Check if the property/value already exist within the registry
-        if (!(Test-RegistryValue -Path $regKey -Property $regName -Value $regValue)){
-            # Add registry key
-            New-ItemProperty -Path $regKey -Name $regName -Value $regValue -PropertyType String -Force | Out-Null
-            Write-Log -Message "Added $regName for user $($user.Username). The value of $regValue was added to the key $regKey."
+            # Check if the property/value already exist within the registry
+            if (!(Test-RegistryValue -Path $regKey -Property $regName -Value $regValue)){
+                # Add registry key
+                Write-Log -Message "Adding reg property/value..."
+                try {
+                    New-ItemProperty -Path $regKey -Name $regName -Value $regValue -PropertyType String -Force | Out-Null
+                }
+                catch {
+                    Write-Log -Message "Unable to add registry prop/value - $($_.Exception.Message)"
+                }
+                
+                Write-Log -Message "Added $regName successfully for $($user.Username)"
+            }
         }
     }
+    catch {
+        Write-Log -Message "$($_.Exception.Message)"
+    }        
 }
