@@ -7,7 +7,8 @@
 $ErrorActionPreference = 'Stop'
 
 # Set the Securly FID
-$fid = "SET THE FID"
+$fid = "securly@theabbey.co.uk"
+$domainName = "theabbey.co.uk"
 
 function Get-SIDFromRegistry {
     <#
@@ -90,24 +91,9 @@ foreach ($u in $users){
     try {
         if ($u.USERNAME -match "$studentRegex|$sTestRegex"){
             Write-Log -Message "Found student account - $($u.USERNAME)"
-            # Create a custom object for storing our user data, because we think ahead..
-            try {
-                $user = [PSCustomObject]@{
-                    Username = $u.USERNAME
-                    SID = (Get-SIDFromRegistry -User $u.USERNAME)
-                    SessionState = $u.STATE.Replace("Disc", "Disconnected")
-                    SessionType = $($u.SESSIONNAME -Replace '#', '' -Replace "[0-9]+", "")
-                    #LogonTime = [datetime]::parseexact($u.'LOGON TIME', 'dd/MM/yyyy HH:mm', $null)
-                } 
-            }
-            catch {
-                Write-Log -Message "Unable to create custom user object - $($_.Exception.Message)"
-            }
-            
-
-            $regKey = "HKU:\$($user.SID)\Software\Microsoft\Windows\CurrentVersion\Internet Settings" #"HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
+            $regKey = "HKU:\$(Get-SIDFromRegistry -User $u.USERNAME)\Software\Microsoft\Windows\CurrentVersion\Internet Settings" #"HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
             $regName = "AutoConfigURL"
-            $regValue = "https://uk-www.securly.com/smart.pac?fid=$fid&user=$($user.Username)@DOMAINNAME.co.uk"
+            $regValue = "https://uk-www.securly.com/smart.pac?fid=$fid&user=$($u.USERNAME)@$domainName"
 
             Write-Log -Message "Registry variables defined - $regkey, $regName, $regValue"
 
@@ -122,7 +108,7 @@ foreach ($u in $users){
                     Write-Log -Message "Unable to add registry prop/value - $($_.Exception.Message)"
                 }
                 
-                Write-Log -Message "Added $regName successfully for $($user.Username)"
+                Write-Log -Message "Added $regName successfully for $($u.USERNAME)"
             }
         }
     }
