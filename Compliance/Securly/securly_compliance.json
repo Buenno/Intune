@@ -1,0 +1,18 @@
+{
+  "Rules": [
+      {
+          "SettingName": "SmartPAC",
+          "Operator": "IsEquals",
+          "DataType": "Boolean",
+          "Operand": true,
+          "MoreInfoUrl": "https://theabbey.co.uk/",
+          "RemediationStrings": [
+              {
+                  "Language": "en_US",
+                  "Title": "One of more users is missing the SmartPAC URL.",
+                  "Description": "Please contact IT support in order to have SmartPAC configured."
+              }
+          ]
+      }
+  ]
+}
