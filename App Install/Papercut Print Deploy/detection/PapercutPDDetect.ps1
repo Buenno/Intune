@@ -1,6 +1,7 @@
 # Check if the uninstall key exists
 $appName = "Papercut Print Deploy"
-$uninstallReg = Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" | Get-ItemProperty | Where-Object {$_.DisplayName -like "$appName*"} -ErrorAction SilentlyContinue
+$appVersion = "1.8.1701"
+$uninstallReg = Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" | Get-ItemProperty | Where-Object {$_.DisplayName -like "$appName*" -and $_.DisplayVersion -eq $appVersion} -ErrorAction SilentlyContinue
 $statusReg =    "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Intune_Win32\$appName"
 
 # Check if status registry keys exist
