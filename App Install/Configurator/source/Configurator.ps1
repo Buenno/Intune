@@ -82,9 +82,9 @@ Add-StatusRegistryProperty -Application $appName -Operation "Task Config Registr
 $apps = @(
     "Microsoft.MicrosoftOfficeHub", 
     "Microsoft.SurfaceAppProxy", 
-    "Microsoft.GamingApp",
     "Microsoft.PowerAutomateDesktop",
-    "Microsoft.Copilot"
+    "Microsoft.Copilot",
+    "Microsoft.MicrosoftSolitaireCollection"
     )
 
 foreach ($app in $apps){
@@ -97,3 +97,17 @@ foreach ($app in $apps){
 ### Remove the Edge shortcut from the public desktop ###
 Remove-Item -Path "$env:PUBLIC\Desktop\Microsoft Edge.lnk" -ErrorAction SilentlyContinue
 Add-StatusRegistryProperty -Application $appName -Operation "Processed Edge Shortcut Removal" -Status 0
+
+### Change the startup type for the auto timezone updater service ###
+$ATService = "tzautoupdate"
+$service = Get-Service -Name $ATService -ErrorAction SilentlyContinue
+if ($null -eq $service) {
+    Write-Output "Service '$ATService' does not exist."
+} 
+else {
+    $startType = (Get-Service -Name $ATService).StartType
+    if ($startType -ne "Automatic") {
+        Set-Service -Name $ATService -StartupType Automatic
+    } 
+    Add-StatusRegistryProperty -Application $appName -Operation "Processed tzautoupdate service settings" -Status 0
+}
