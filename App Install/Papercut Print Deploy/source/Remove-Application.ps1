@@ -35,6 +35,8 @@ function Remove-StatusRegistryKey {
 
 $appName = "Papercut Print Deploy"
 $installer = "msiexec.exe"
+$pnputil = "pnputil.exe"
+$driver = Get-ChildItem -Path "$PSScriptRoot\binary\drivers" -Filter *.inf
 
 # Get uninstall string from registry
 $uninstallReg = Get-ChildItem -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" | Get-ItemProperty | Where-Object {$_.DisplayName -like "$appName*"}
@@ -45,10 +47,15 @@ $uninstallParams = @(
     "/qn"
 )
 
+$pnputilParams = @(
+    "/delete-driver $($driver.FullName) /force"
+)
+
 # Uninstall application
 $u = Start-Process $installer -ArgumentList "$($uninstallParams -join " ")" -PassThru -Wait
+$d = Start-Process $pnputil -ArgumentList "$($pnputilParams -join " ")" -PassThru -Wait
 
 # Remove status registry key
-if ($u.ExitCode -eq 0){
+if ($u.ExitCode -eq 0 -and $d.ExitCode -eq 0){
     Remove-StatusRegistryKey -Application $appName 
 }

@@ -82,12 +82,20 @@ function Remove-StatusRegistryKey {
 
 $appName = "Papercut Print Deploy"
 $binary = Get-ChildItem -Path "$PSScriptRoot\binary" -Filter *.msi
+$driver = Get-ChildItem -Path "$PSScriptRoot\binary\drivers" -Filter *.inf
 $installer = "msiexec.exe"
+$pnputil = "pnputil.exe"
+
 $installOp = "Installation"
+$driverOp = "Driver Installation"
 
 $installParams = @(
     "/i $($binary.FullName)",
     "/qn"
+)
+
+$pnputilParams = @(
+    "/add-driver $($driver.FullName) /install"
 )
 
 # Remove existing status registry key
@@ -96,7 +104,15 @@ Remove-StatusRegistryKey -Application $appName
 # Install application
 $i = Start-Process $installer -ArgumentList "$($installParams -join " ")" -PassThru -Wait
 
-# Add status registry key
+# Add installation status registry key
 if ($i.ExitCode -eq 0){
     Add-StatusRegistryProperty -Application $appName -Operation $installOp -Status '0' 
+}
+
+# Install printer drivers
+$d = Start-Process $pnputil -ArgumentList "$($pnputilParams -join " ")" -PassThru -Wait
+
+# Add driver install status registry key
+if ($d.ExitCode -eq 0){
+    Add-StatusRegistryProperty -Application $appName -Operation $driverOp -Status '0' 
 }
